@@ -15,6 +15,12 @@ class Request extends \yii\web\Request
     public $checksumParam = '_checksum';
     public $enableChecksumValidation = true;
 
+    public function init()
+    {
+        parent::init();
+        \Yii::$container->set('yii\widgets\ActiveField', '\carono\checksum\ActiveField');
+    }
+
     public function checksumIsEnabled()
     {
         return $this->enableChecksumValidation;
