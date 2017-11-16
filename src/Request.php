@@ -19,6 +19,7 @@ class Request extends \yii\web\Request
     {
         parent::init();
         \Yii::$container->set('yii\widgets\ActiveField', '\carono\checksum\ActiveField');
+        \Yii::$container->set('yii\helpers\Html', '\carono\checksum\Html');
     }
 
     public function checksumIsEnabled()
