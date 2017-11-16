@@ -12,13 +12,23 @@ use yii\helpers\Html;
  */
 class ActiveForm extends \yii\widgets\ActiveForm
 {
-    protected $fieldStack = [];
+    public $fieldClass = 'carono\checksum\ActiveField';
+
+    public function init()
+    {
+        parent::init();
+        if (\Yii::$app->request instanceof Request && \Yii::$app->request->enableChecksumValidation) {
+            \Yii::$app->request->clearStack($this->id);
+        }
+    }
 
     public function run()
     {
         if (\Yii::$app->request instanceof Request && \Yii::$app->request->enableChecksumValidation) {
-            echo Html::hiddenInput(\Yii::$app->request->checksumParam, Checksum::calculate(ActiveField::$fieldStack));
-            ActiveField::$fieldStack = [];
+            $stack = \Yii::$app->request->getStack($this->id);
+            $key = Checksum::calculate($stack);
+            \Yii::$app->request->stackField($this->id, \Yii::$app->request->checksumParam, $key);
+            echo Html::hiddenInput(\Yii::$app->request->checksumParam, $key);
         }
         return parent::run();
     }

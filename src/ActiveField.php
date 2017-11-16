@@ -3,6 +3,8 @@
 
 namespace carono\checksum;
 
+use yii\helpers\Html;
+
 /**
  * Class ActiveField
  *
@@ -10,13 +12,12 @@ namespace carono\checksum;
  */
 class ActiveField extends \yii\widgets\ActiveField
 {
-    static $fieldStack;
-
     public function __toString()
     {
         $string = parent::__toString();
-        if (preg_match('#<input|<select|<textarea#', $string)) {
-            self::$fieldStack[$this->model->formName()][] = $this->attribute;
+        if (\Yii::$app->request instanceof Request && preg_match('#<input|<select|<textarea#', $string)) {
+            $attribute = Html::getAttributeName($this->attribute);
+            \Yii::$app->request->stackField($this->form->id, $this->model->formName(), $attribute);
         }
         return $string;
     }
