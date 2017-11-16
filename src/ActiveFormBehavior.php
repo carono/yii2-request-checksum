@@ -21,7 +21,7 @@ class ActiveFormBehavior extends Behavior
 
     public function registerChecksumField()
     {
-        if (\Yii::$app->request instanceof Request && \Yii::$app->request->enableChecksumValidation) {
+        if (\Yii::$app->request instanceof Request && \Yii::$app->request->checksumIsEnabled()) {
             $stack = \Yii::$app->request->getStack($this->owner->id);
             $key = Checksum::calculate($stack);
             \Yii::$app->request->stackField($this->owner->id, \Yii::$app->request->checksumParam, $key);

@@ -15,13 +15,18 @@ class Request extends \yii\web\Request
     public $checksumParam = '_checksum';
     public $enableChecksumValidation = true;
 
+    public function checksumIsEnabled()
+    {
+        return $this->enableChecksumValidation;
+    }
+
     /**
      * @param null $clientSuppliedToken
      * @return bool
      */
     public function validateCsrfToken($clientSuppliedToken = null)
     {
-        if ($this->isPost) {
+        if ($this->isPost && $this->checksumIsEnabled()) {
             $post = $this->post();
             $checksum = ArrayHelper::remove($post, $this->checksumParam);
             $stack = $this->getStackByChecksum($checksum);

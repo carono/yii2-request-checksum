@@ -15,7 +15,7 @@ trait ActiveFieldTrait
 {
     public function init()
     {
-        if (\Yii::$app->request instanceof Request && \Yii::$app->request->enableChecksumValidation) {
+        if (\Yii::$app->request instanceof Request && \Yii::$app->request->checksumIsEnabled()) {
             if (!$this->form->canGetProperty('_checksumInit')) {
                 $this->form->attachBehavior('caronoChecksumBehavior', ActiveFormBehavior::className());
                 \Yii::$app->request->clearStack($this->form->id);
@@ -27,9 +27,11 @@ trait ActiveFieldTrait
     public function __toString()
     {
         $string = parent::__toString();
-        if (\Yii::$app->request instanceof Request && preg_match('#<input|<select|<textarea#', $string)) {
-            $attribute = Html::getAttributeName($this->attribute);
-            \Yii::$app->request->stackField($this->form->id, $this->model->formName(), $attribute);
+        if (\Yii::$app->request instanceof Request && \Yii::$app->request->checksumIsEnabled()) {
+            if (preg_match('#<input|<select|<textarea#', $string)) {
+                $attribute = Html::getAttributeName($this->attribute);
+                \Yii::$app->request->stackField($this->form->id, $this->model->formName(), $attribute);
+            }
         }
         return $string;
     }
