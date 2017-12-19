@@ -17,8 +17,11 @@ class Checksum
      */
     public static function calculate($array, $salt = null)
     {
-        $key = static::formKey($array);
-        return md5($salt . $key);
+        if ($key = static::formKey($array)) {
+            return md5($salt . $key);
+        } else {
+            return null;
+        }
     }
 
     /**
