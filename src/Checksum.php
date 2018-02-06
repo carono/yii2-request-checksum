@@ -48,7 +48,6 @@ class Checksum
                 foreach ($values as $key => $value) {
                     if (is_array($value)) {
                         foreach ($value as $subKey => $subValue) {
-//                            $result[] = join('=', [$model,is_numeric($key) ? "{$value}[{$subKey}]" : "{$key}[{$subKey}]"]);
                             $result[] = join('=', [$model, is_numeric($key) ? $value : $key]);
                             break;
                         }
@@ -56,8 +55,6 @@ class Checksum
                         $result[] = join('=', [$model, is_numeric($key) ? $value : $key]);
                     }
                 }
-            } else {
-                // regular variables
             }
         }
         $result = array_unique($result);
