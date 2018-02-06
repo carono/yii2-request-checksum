@@ -1,7 +1,4 @@
 # language:
-php:
-    code_rating: true
-    duplication: true
 checks:
     php:
         verify_property_names: true
