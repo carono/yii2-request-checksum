@@ -8,18 +8,32 @@ use yii\helpers\ArrayHelper;
 /**
  * Class Request
  *
+ * @property mixed checksumKey
  * @package carono\checksum
  */
 class Request extends \yii\web\Request
 {
     public $checksumParam = '_checksum';
     public $enableChecksumValidation = true;
+    public $redefineActiveField = true;
+    protected $_checksumKey;
+
+    public function getChecksumKey()
+    {
+        return $this->_checksumKey ?: hash("sha256", $this->cookieValidationKey);
+    }
+
+    public function setChecksumKey($value)
+    {
+        $this->_checksumKey = $value;
+    }
 
     public function init()
     {
         parent::init();
-        \Yii::$container->set('yii\widgets\ActiveField', '\carono\checksum\ActiveField');
-        \Yii::$container->set('yii\helpers\Html', '\carono\checksum\Html');
+        if ($this->redefineActiveField) {
+            \Yii::$container->set('yii\widgets\ActiveField', 'carono\checksum\ActiveField');
+        }
     }
 
     public function checksumIsEnabled()
@@ -37,17 +51,17 @@ class Request extends \yii\web\Request
             $post = $this->post();
             $checksum = ArrayHelper::remove($post, $this->checksumParam);
             $stack = $this->getStackByChecksum($checksum);
-            ArrayHelper::remove($post, $this->csrfParam);
             $postPartials = Checksum::formKeyPartials($post);
             $stackPartials = Checksum::formKeyPartials($stack);
             foreach (array_diff($stackPartials, $postPartials) as $lostPartial) {
                 list($formName, $attribute) = explode('=', $lostPartial);
                 $post[$formName][$attribute] = '';
             }
-            if (!Checksum::validate($post, $checksum)) {
+            if (!Checksum::validate($post, $checksum, $this->checksumKey)) {
                 return false;
             }
         }
+        $this->clearStack();
         return parent::validateCsrfToken($clientSuppliedToken);
     }
 

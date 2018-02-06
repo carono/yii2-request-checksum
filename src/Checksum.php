@@ -18,7 +18,7 @@ class Checksum
     public static function calculate($array, $salt = null)
     {
         if ($key = static::formKey($array)) {
-            return md5($salt . $key);
+            return hash("sha256", $key . $salt);
         } else {
             return null;
         }
@@ -44,16 +44,20 @@ class Checksum
     {
         $result = [];
         foreach ((array)$array as $model => $values) {
-            foreach ((array)$values as $key => $value) {
-                if (is_array($value)) {
-                    foreach ($value as $subKey => $subValue) {
+            if (is_array($values)) {
+                foreach ($values as $key => $value) {
+                    if (is_array($value)) {
+                        foreach ($value as $subKey => $subValue) {
 //                            $result[] = join('=', [$model,is_numeric($key) ? "{$value}[{$subKey}]" : "{$key}[{$subKey}]"]);
+                            $result[] = join('=', [$model, is_numeric($key) ? $value : $key]);
+                            break;
+                        }
+                    } else {
                         $result[] = join('=', [$model, is_numeric($key) ? $value : $key]);
-                        break;
                     }
-                } else {
-                    $result[] = join('=', [$model, is_numeric($key) ? $value : $key]);
                 }
+            } else {
+                // regular variables
             }
         }
         $result = array_unique($result);

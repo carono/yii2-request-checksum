@@ -30,7 +30,7 @@ class ActiveFormBehavior extends Behavior
     {
         if (strtolower($this->owner->method) == 'post' && \Yii::$app->request instanceof Request && \Yii::$app->request->checksumIsEnabled()) {
             $stack = \Yii::$app->request->getStack($this->owner->id);
-            $key = Checksum::calculate($stack);
+            $key = Checksum::calculate($stack, \Yii::$app->request->checksumKey);
             \Yii::$app->request->stackField($this->owner->id, \Yii::$app->request->checksumParam, $key);
             echo Html::hiddenInput(\Yii::$app->request->checksumParam, $key);
         }
