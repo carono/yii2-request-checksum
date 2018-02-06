@@ -1,0 +1,9 @@
+imports:
+    - php
+tools:
+    php_sim: false
+    php_cpd: false
+checks:
+    php:
+        code_rating: true
+        duplication: true
