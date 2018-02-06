@@ -1,6 +1,7 @@
 {
   "name": "carono/yii2-request-checksum",
   "type": "library",
+  "description": "Checksum request for forms",
   "license": "MIT",
   "authors": [
     {
