@@ -16,6 +16,11 @@ class Request extends \yii\web\Request
     public $checksumParam = '_checksum';
     public $enableChecksumValidation = true;
     public $redefineActiveField = true;
+    public $activeFormClasses = [
+        \yii\widgets\ActiveForm::class,
+        \yii\bootstrap\ActiveForm::class,
+        \carono\checksum\ActiveForm::class
+    ];
     protected $_checksumKey;
 
     public function getChecksumKey()
@@ -32,7 +37,12 @@ class Request extends \yii\web\Request
     {
         parent::init();
         if ($this->redefineActiveField) {
-            \Yii::$container->set('yii\widgets\ActiveField', 'carono\checksum\ActiveField');
+            $behavior = ['as caronoChecksumBehavior' => ChecksumBehavior::class];
+            foreach ($this->activeFormClasses as $class) {
+                if (class_exists($class)) {
+                    \Yii::$container->set($class, $behavior);
+                }
+            }
         }
     }
 
@@ -60,8 +70,8 @@ class Request extends \yii\web\Request
             if (!Checksum::validate($post, $checksum, $this->checksumKey)) {
                 return false;
             }
+            $this->clearStack();
         }
-        $this->clearStack();
         return parent::validateCsrfToken($clientSuppliedToken);
     }
 
@@ -75,41 +85,30 @@ class Request extends \yii\web\Request
 
     /**
      * @param $widgetId
-     * @param $modelName
-     * @param $fieldName
+     * @param $stack
+     * @return string
      */
-    public function stackField($widgetId, $modelName, $fieldName)
+    public function setStack($stack)
     {
+        $checksum = Checksum::calculate($stack, $this->checksumKey);
         $key = $this->getStackKey();
         $data = $this->getStack();
-        $data[$widgetId][$modelName][] = $fieldName;
-        return \Yii::$app->session->set($key, $data);
+        $data[$checksum] = $stack;
+        \Yii::$app->session->set($key, $data);
+        return $checksum;
+    }
+
+    public function clearStack()
+    {
+        return \Yii::$app->session->set($this->getStackKey(), []);
     }
 
     /**
-     * @param null $widgetId
-     */
-    public function clearStack($widgetId = null)
-    {
-        $key = $this->getStackKey();
-        $data = $this->getStack();
-        if (!is_null($widgetId)) {
-            unset($data[$widgetId]);
-        } else {
-            $data = [];
-        }
-        return \Yii::$app->session->set($key, $data);
-    }
-
-    /**
-     * @param null $widgetId
      * @return mixed
      */
-    public function getStack($widgetId = null)
+    public function getStack()
     {
-        $key = self::getStackKey();
-        $data = \Yii::$app->session->get($key, []);
-        return is_null($widgetId) ? $data : ArrayHelper::getValue($data, $widgetId);
+        return \Yii::$app->session->get($this->getStackKey(), []);
     }
 
     /**
@@ -118,12 +117,6 @@ class Request extends \yii\web\Request
      */
     public function getStackByChecksum($checksum)
     {
-        foreach ($this->getStack() as $item) {
-            if (($value = ArrayHelper::getValue($item, $this->checksumParam . '.0')) && $value == $checksum) {
-                unset($item[$this->checksumParam]);
-                return $item;
-            }
-        }
-        return [];
+        return ArrayHelper::getValue($this->getStack(), $checksum);
     }
 }

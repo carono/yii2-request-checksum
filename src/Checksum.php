@@ -18,10 +18,10 @@ class Checksum
     public static function calculate($array, $salt = null)
     {
         if ($key = static::formKey($array)) {
-            return hash("sha256", $key . $salt);
-        } else {
-            return null;
+            return hash('sha256', $key . $salt);
         }
+
+        return null;
     }
 
     /**
@@ -32,8 +32,7 @@ class Checksum
      */
     public static function validate($array, $hash, $salt = null)
     {
-        $realHash = static::calculate($array, $salt);
-        return $realHash == $hash;
+        return static::calculate($array, $salt) === $hash;
     }
 
     /**
@@ -42,17 +41,18 @@ class Checksum
      */
     public static function formKeyPartials($array)
     {
+        $array = static::prepareData($array);
         $result = [];
         foreach ((array)$array as $model => $values) {
             if (is_array($values)) {
                 foreach ($values as $key => $value) {
                     if (is_array($value)) {
                         foreach ($value as $subKey => $subValue) {
-                            $result[] = join('=', [$model, is_numeric($key) ? $value : $key]);
+                            $result[] = implode('=', [$model, is_numeric($key) ? $value : $key]);
                             break;
                         }
                     } else {
-                        $result[] = join('=', [$model, is_numeric($key) ? $value : $key]);
+                        $result[] = implode('=', [$model, is_numeric($key) ? $value : $key]);
                     }
                 }
             }
@@ -62,13 +62,19 @@ class Checksum
         return $result;
     }
 
+    protected static function prepareData($array)
+    {
+        $array = array_filter($array ?: [], 'is_array');
+
+        return $array;
+    }
+
     /**
      * @param $array
      * @return string
      */
     public static function formKey($array)
     {
-        $result = join('|', static::formKeyPartials($array));
-        return $result;
+        return implode('|', static::formKeyPartials($array));
     }
 }
