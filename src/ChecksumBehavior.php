@@ -36,8 +36,9 @@ class ChecksumBehavior extends Behavior
         if (!$event->output) {
             return;
         }
+        $output = mb_convert_encoding($event->output, 'HTML-ENTITIES', 'UTF-8');
         $document = new DOMDocument();
-        $document->loadHTML($event->output, LIBXML_NOERROR);
+        $document->loadHTML($output, LIBXML_NOERROR);
         $xpath = new \DOMXPath($document);
         foreach ($xpath->query("//form[@method='post']") as $form) {
             $items = [];
