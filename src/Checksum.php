@@ -6,7 +6,7 @@ namespace carono\checksum;
 /**
  * Class Checksum
  *
- * @package app\helpers
+ * @package carono\checksum
  */
 class Checksum
 {

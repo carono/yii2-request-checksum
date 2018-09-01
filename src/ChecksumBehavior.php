@@ -9,18 +9,14 @@ use DOMElement;
 use yii\base\Behavior;
 use yii\base\ViewEvent;
 use yii\web\View;
-use yii\widgets\ActiveForm;
 
 /**
- * Class ActiveFormBehavior
+ * Class ChecksumBehavior
  *
  * @package carono\checksum
- * @property ActiveForm $owner
  */
 class ChecksumBehavior extends Behavior
 {
-    public $_checksumInit = true;
-
     public function events()
     {
         return [

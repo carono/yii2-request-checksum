@@ -8,7 +8,7 @@ use yii\helpers\ArrayHelper;
 /**
  * Class Request
  *
- * @property mixed checksumKey
+ * @property string checksumKey
  * @package carono\checksum
  */
 class Request extends \yii\web\Request
@@ -36,6 +36,9 @@ class Request extends \yii\web\Request
         }
     }
 
+    /**
+     * @return bool
+     */
     public function checksumIsEnabled()
     {
         return $this->enableChecksumValidation;
