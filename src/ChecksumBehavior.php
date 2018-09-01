@@ -4,9 +4,11 @@
 namespace carono\checksum;
 
 
+use DOMDocument;
+use DOMElement;
 use yii\base\Behavior;
-use yii\base\Widget;
-use yii\helpers\Html;
+use yii\base\ViewEvent;
+use yii\web\View;
 use yii\widgets\ActiveForm;
 
 /**
@@ -22,41 +24,39 @@ class ChecksumBehavior extends Behavior
     public function events()
     {
         return [
-            Widget::EVENT_AFTER_RUN => 'registerChecksumField'
+            View::EVENT_AFTER_RENDER => 'registerChecksumField'
         ];
     }
 
     /**
      * @param \yii\base\WidgetEvent $event
      */
-    public function registerChecksumField($event)
+    public function registerChecksumField(ViewEvent $event)
     {
         /**
-         * @var Request $request
+         * @var DOMElement $form
+         * @var DOMElement $element
          */
-        if (strtolower($this->owner->method) !== 'post' || (\Yii::$app->request instanceof Request && !\Yii::$app->request->checksumIsEnabled())) {
+        if (!$event->output) {
             return;
         }
-        $request = \Yii::$app->request;
-        $doc = new \DOMDocument();
-        @$doc->loadHTML($event->result);
-        $xpath = new \DOMXpath($doc);
-        $inputs = $xpath->query('//input | //select | //textarea');
-        $result = [];
-        for ($j = 0; $j < $inputs->length; $j++) {
-            $input = $inputs->item($j);
-            $result[] = $input->getAttribute('name');
+        $document = new DOMDocument();
+        $document->loadHTML($event->output, LIBXML_NOERROR);
+        $xpath = new \DOMXPath($document);
+        foreach ($xpath->query("//form[@method='post']") as $form) {
+            $items = [];
+            foreach ($xpath->query('//input|//select|//textarea', $form) as $element) {
+                $items[] = $element->getAttribute('name');
+            }
+            $items = array_unique($items);
+            parse_str(implode('&', $items), $stack);
+            $checksum = \Yii::$app->request->setStack($stack);
+            $input = $document->createElement('input');
+            $input->setAttribute('name', \Yii::$app->request->checksumParam);
+            $input->setAttribute('value', $checksum);
+            $input->setAttribute('type', 'hidden');
+            $form->appendChild($input);
         }
-        $result = array_unique($result);
-
-        parse_str(implode('&', $result), $stack);
-        unset($doc, $xpath);
-        $checksum = $request->setStack($stack);
-        $input = Html::hiddenInput(\Yii::$app->request->checksumParam, $checksum);
-        $event->result = str_replace('</form>', $input . '</form>', $event->result);
-//            $stack = \Yii::$app->request->getStack($this->owner->id);
-//            $key = Checksum::calculate($stack, \Yii::$app->request->checksumKey);
-//            \Yii::$app->request->stackField($this->owner->id, \Yii::$app->request->checksumParam, $key);
-//            echo Html::hiddenInput(\Yii::$app->request->checksumParam, $key);
+        $event->output = $document->saveHTML();
     }
 }

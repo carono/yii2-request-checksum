@@ -15,17 +15,12 @@ class Request extends \yii\web\Request
 {
     public $checksumParam = '_checksum';
     public $enableChecksumValidation = true;
-    public $redefineActiveField = true;
-    public $activeFormClasses = [
-        \yii\widgets\ActiveForm::class,
-        \yii\bootstrap\ActiveForm::class,
-        \carono\checksum\ActiveForm::class
-    ];
+    public $attachBehaviorViewBehaviour = true;
     protected $_checksumKey;
 
     public function getChecksumKey()
     {
-        return $this->_checksumKey ?: hash("sha256", $this->cookieValidationKey);
+        return $this->_checksumKey ?: hash('sha256', $this->cookieValidationKey);
     }
 
     public function setChecksumKey($value)
@@ -36,13 +31,8 @@ class Request extends \yii\web\Request
     public function init()
     {
         parent::init();
-        if ($this->redefineActiveField) {
-            $behavior = ['as caronoChecksumBehavior' => ChecksumBehavior::class];
-            foreach ($this->activeFormClasses as $class) {
-                if (class_exists($class)) {
-                    \Yii::$container->set($class, $behavior);
-                }
-            }
+        if ($this->attachBehaviorViewBehaviour) {
+            \Yii::$app->view->attachBehavior('caronoChecksumBehavior', ChecksumBehavior::class);
         }
     }
 
@@ -59,18 +49,11 @@ class Request extends \yii\web\Request
     {
         if ($this->isPost && $this->checksumIsEnabled()) {
             $post = $this->post();
-            $checksum = ArrayHelper::remove($post, $this->checksumParam);
+            $checksum = ArrayHelper::getValue($post, $this->checksumParam);
             $stack = $this->getStackByChecksum($checksum);
-            $postPartials = Checksum::formKeyPartials($post);
-            $stackPartials = Checksum::formKeyPartials($stack);
-            foreach (array_diff($stackPartials, $postPartials) as $lostPartial) {
-                list($formName, $attribute) = explode('=', $lostPartial);
-                $post[$formName][$attribute] = '';
-            }
-            if (!Checksum::validate($post, $checksum, $this->checksumKey)) {
+            if (!Checksum::compareStacks($post, $stack, $this->checksumKey)) {
                 return false;
             }
-            $this->clearStack();
         }
         return parent::validateCsrfToken($clientSuppliedToken);
     }
@@ -117,6 +100,6 @@ class Request extends \yii\web\Request
      */
     public function getStackByChecksum($checksum)
     {
-        return ArrayHelper::getValue($this->getStack(), $checksum);
+        return ArrayHelper::getValue($this->getStack(), $checksum, []);
     }
 }

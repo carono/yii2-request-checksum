@@ -44,17 +44,8 @@ class Checksum
         $array = static::prepareData($array);
         $result = [];
         foreach ((array)$array as $model => $values) {
-            if (is_array($values)) {
-                foreach ($values as $key => $value) {
-                    if (is_array($value)) {
-                        foreach ($value as $subKey => $subValue) {
-                            $result[] = implode('=', [$model, is_numeric($key) ? $value : $key]);
-                            break;
-                        }
-                    } else {
-                        $result[] = implode('=', [$model, is_numeric($key) ? $value : $key]);
-                    }
-                }
+            foreach (array_keys((array)$values) as $key) {
+                $result[] = implode('=', [$model, $key]);
             }
         }
         $result = array_unique($result);
@@ -62,11 +53,13 @@ class Checksum
         return $result;
     }
 
+    /**
+     * @param $array
+     * @return array
+     */
     protected static function prepareData($array)
     {
-        $array = array_filter($array ?: [], 'is_array');
-
-        return $array;
+        return array_filter($array ?: [], 'is_array');
     }
 
     /**
@@ -76,5 +69,34 @@ class Checksum
     public static function formKey($array)
     {
         return implode('|', static::formKeyPartials($array));
+    }
+
+    /**
+     * @param $post
+     * @param $stack
+     * @param null $salt
+     * @return bool
+     */
+    public static function compareStacks($post, $stack, $salt = null)
+    {
+        $checksum = static::calculate($stack, $salt);
+        $post = static::mergeStacks($post, $stack);
+        return static::validate($post, $checksum, $salt);
+    }
+
+    /**
+     * @param $post
+     * @param $stack
+     * @return mixed
+     */
+    protected static function mergeStacks($post, $stack)
+    {
+        $postPartials = static::formKeyPartials($post);
+        $stackPartials = static::formKeyPartials($stack);
+        foreach (array_diff($stackPartials, $postPartials) as $lostPartial) {
+            list($formName, $attribute) = explode('=', $lostPartial);
+            $post[$formName][$attribute] = '';
+        }
+        return $post;
     }
 }
