@@ -3,12 +3,12 @@
 
 namespace carono\checksum;
 
+use yii\base\InvalidConfigException;
 use yii\helpers\ArrayHelper;
 
 /**
  * Class Request
  *
- * @property string checksumKey
  * @package carono\checksum
  */
 class Request extends \yii\web\Request
@@ -16,23 +16,19 @@ class Request extends \yii\web\Request
     public $checksumParam = '_checksum';
     public $enableChecksumValidation = true;
     public $attachBehaviorViewBehaviour = true;
-    protected $_checksumKey;
+    public $checksumKey;
 
-    public function getChecksumKey()
-    {
-        return $this->_checksumKey ?: hash('sha256', $this->cookieValidationKey);
-    }
-
-    public function setChecksumKey($value)
-    {
-        $this->_checksumKey = $value;
-    }
-
+    /**
+     * @throws InvalidConfigException
+     */
     public function init()
     {
         parent::init();
         if ($this->attachBehaviorViewBehaviour) {
             \Yii::$app->view->attachBehavior('caronoChecksumBehavior', ChecksumBehavior::class);
+        }
+        if (!$this->checksumKey){
+            throw new InvalidConfigException('The "checksumKey" property must be set.');
         }
     }
 
@@ -84,6 +80,9 @@ class Request extends \yii\web\Request
         return $checksum;
     }
 
+    /**
+     * @return mixed
+     */
     public function clearStack()
     {
         return \Yii::$app->session->set($this->getStackKey(), []);

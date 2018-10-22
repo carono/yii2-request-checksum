@@ -17,6 +17,9 @@ use yii\web\View;
  */
 class ChecksumBehavior extends Behavior
 {
+    /**
+     * @return array
+     */
     public function events()
     {
         return [
@@ -32,6 +35,7 @@ class ChecksumBehavior extends Behavior
         /**
          * @var DOMElement $form
          * @var DOMElement $element
+         * @var Request $request
          */
         if (!$event->output) {
             return;
@@ -40,6 +44,7 @@ class ChecksumBehavior extends Behavior
         $document = new DOMDocument();
         $document->loadHTML($output, LIBXML_NOERROR);
         $xpath = new \DOMXPath($document);
+        $request = \Yii::$app->request;
         foreach ($xpath->query("//form[@method='post']") as $form) {
             $items = [];
             foreach ($xpath->query('//input|//select|//textarea', $form) as $element) {
@@ -47,7 +52,7 @@ class ChecksumBehavior extends Behavior
             }
             $items = array_unique($items);
             parse_str(implode('&', $items), $stack);
-            $checksum = \Yii::$app->request->setStack($stack);
+            $checksum = $request->setStack($stack);
             $input = $document->createElement('input');
             $input->setAttribute('name', \Yii::$app->request->checksumParam);
             $input->setAttribute('value', $checksum);
